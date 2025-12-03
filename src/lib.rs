@@ -45,6 +45,47 @@ where
         .collect()
 }
 
+/// Parse a delimited string slice into a vector of string slices
+pub fn parse_delimited(input: &str, delimiter: char) -> Vec<&str> {
+    input.split(delimiter).map(|s| s.trim()).collect()
+}
+
+/// Parse a delimited string slice into a vector of parsed values
+pub fn parse_delimited_as<T>(input: &str, delimiter: char) -> Vec<T>
+where
+    T: std::str::FromStr,
+    T::Err: std::fmt::Debug,
+{
+    input
+        .split(delimiter)
+        .map(|s| s.trim().parse().expect("Failed to parse value"))
+        .collect()
+}
+
+/// Split a string into N equal-sized chunks (by character count, handles Unicode correctly)
+/// Returns None if the string cannot be evenly divided into N chunks
+pub fn split_into_chunks(input: &str, n: usize) -> Option<Vec<String>> {
+    if n == 0 {
+        return None;
+    }
+    
+    let char_count = input.chars().count();
+    if char_count % n != 0 {
+        return None;
+    }
+    
+    let chunk_size = char_count / n;
+    let mut chunks = Vec::new();
+    let mut chars = input.chars();
+    
+    for _ in 0..n {
+        let chunk: String = chars.by_ref().take(chunk_size).collect();
+        chunks.push(chunk);
+    }
+    
+    Some(chunks)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,5 +109,65 @@ mod tests {
         let input = "1\n2\n3\n";
         let numbers: Vec<i32> = parse_numbers(input);
         assert_eq!(numbers, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_parse_delimited() {
+        let input = "a-b-c-d";
+        let parts = parse_delimited(input, '-');
+        assert_eq!(parts, vec!["a", "b", "c", "d"]);
+        
+        let input_pipe = "a | b | c";
+        let parts = parse_delimited(input_pipe, '|');
+        assert_eq!(parts, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_parse_delimited_as() {
+        let input = "1-2-3-4";
+        let numbers: Vec<i32> = parse_delimited_as(input, '-');
+        assert_eq!(numbers, vec![1, 2, 3, 4]);
+        
+        let input_pipe = "10 | 20 | 30";
+        let numbers: Vec<i32> = parse_delimited_as(input_pipe, '|');
+        assert_eq!(numbers, vec![10, 20, 30]);
+    }
+
+    #[test]
+    fn test_split_into_chunks() {
+        // Split in half
+        let input = "abcdef";
+        let chunks = split_into_chunks(input, 2);
+        assert_eq!(chunks, Some(vec!["abc".to_string(), "def".to_string()]));
+        
+        // Split into 3 chunks
+        let input = "123456789";
+        let chunks = split_into_chunks(input, 3);
+        assert_eq!(chunks, Some(vec!["123".to_string(), "456".to_string(), "789".to_string()]));
+        
+        // Cannot split evenly - returns None
+        let input = "abcde";
+        let chunks = split_into_chunks(input, 2);
+        assert_eq!(chunks, None);
+
+        let input = "abcde";
+        let chunks = split_into_chunks(input, 5);
+        assert_eq!(chunks, Some(vec!["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string(), "e".to_string()]));
+        
+        
+        // Unicode handling
+        let input = "🎄🎅🎁🎉🎊🎈";
+        let chunks = split_into_chunks(input, 2);
+        assert_eq!(chunks, Some(vec!["🎄🎅🎁".to_string(), "🎉🎊🎈".to_string()]));
+        
+        // Edge case: n = 0
+        let input = "abc";
+        let chunks = split_into_chunks(input, 0);
+        assert_eq!(chunks, None);
+        
+        // Edge case: split into 1 chunk
+        let input = "hello";
+        let chunks = split_into_chunks(input, 1);
+        assert_eq!(chunks, Some(vec!["hello".to_string()]));
     }
 }
