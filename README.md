@@ -131,9 +131,9 @@ TODO: Add example input here
 
 ## Progress
 
-- [X] Day 1 (Part 1, I can pass Part 2's example but not the input. Will need to investigate this later.)
-- [ ] Day 2
-- [ ] Day 3
+- [*] Day 1
+- [**] Day 2
+- [*] Day 3
 - [ ] Day 4
 - [ ] Day 5
 - [ ] Day 6
