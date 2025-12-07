@@ -79,10 +79,64 @@ fn part1(input: &str) -> i32 {
 }
 
 fn part2(input: &str) -> i64 {
+    let lines = parse_lines(input);
+    //println!("Lines are {:?}", &lines);
 
-    // Remove the indices from flattened vector that correspond to the 3 smallest values
-    // Then select all indices that remain 
-    0
+    let mut sum = 0;
+    let mut vec_de_vecs: Vec<Vec<bool>> = Vec::new();
+
+
+    for line in lines {
+        let chunks = split_into_chunks(&line, line.chars().count());
+        match chunks {
+            Some(x)=> {
+                let mut vec_chunk_bools: Vec<bool> = Vec::new();
+                for x in x {
+                    if x == "@" {
+                        vec_chunk_bools.push(true);
+                    } else {
+                        vec_chunk_bools.push(false);
+                    }
+                }
+                vec_de_vecs.push(vec_chunk_bools);
+            }
+            None=>{continue;}
+        }
+    }
+    let mut after_removal_vec_de_vecs = vec_de_vecs.clone();
+
+    let mut keep_going: bool = true;
+    while keep_going {
+        let mut removals: bool = false;
+        vec_de_vecs = after_removal_vec_de_vecs.clone();
+        for (row, line) in vec_de_vecs.iter().enumerate() {
+            for (column, roll) in line.iter().enumerate() {
+                if *roll {
+                    let adjacent_spots = get_adjacent_spots(row, column, vec_de_vecs.iter().count(), line.iter().count());
+                    let mut num_of_adjacent_roles: i32 = 0;
+                    for (rows, columns) in adjacent_spots {
+                        let is_roll: bool = vec_de_vecs[rows][columns];
+                        if is_roll {
+                            num_of_adjacent_roles += 1;
+                        }
+                    }
+                    if num_of_adjacent_roles < 4 {
+                        sum += 1;
+                        print!("x");
+                        after_removal_vec_de_vecs[row][column] = false;
+                        removals = true;
+                    } else {
+                        print!("@");
+                    }
+                } else {
+                    print!(".")
+                }
+            }
+            println!("");
+        }
+        keep_going = removals;
+    }
+    sum
 }
 
 fn main() {
@@ -114,6 +168,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(EXAMPLE), 4174379265);
+        assert_eq!(part2(EXAMPLE), 43);
     }
 }
